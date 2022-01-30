@@ -1,9 +1,12 @@
 package br.com.premiosprodutora.premiosProdutora.entidades;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
+@Data
 public class Filmes implements Serializable {
     private static long serialVersionUID = 1L;
 
