@@ -3,6 +3,7 @@ package br.com.premiosprodutora.premiosProdutora.resource;
 import br.com.premiosprodutora.premiosProdutora.dto.IntervaloPremiosProdutoraDTO;
 import br.com.premiosprodutora.premiosProdutora.entidades.Filmes;
 import br.com.premiosprodutora.premiosProdutora.repository.FilmesRepository;
+import com.sun.istack.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +33,7 @@ public class ConsultaPremios {
         List<IntervaloPremiosProdutoraDTO> listIntervaloMax = new ArrayList<>();
         Map<String,Integer> maxIntervalo = new HashMap<String,Integer>();
         Map<String,Integer> minIntervalo = new HashMap<String,Integer>();
-        int intervalo;
+        int intervalo, proximoAno, anoAnterior;
 
         for(Filmes filme: filmesRepository.findAll()) {
             if (!produtoras.contains(filme.getProdutora())) {
@@ -44,6 +45,9 @@ public class ConsultaPremios {
         for(String produtora : produtoras) {
             anos.clear();
             intervalo = 0;
+            anoAnterior = 0;
+            proximoAno  = 0;
+
             List<Filmes> filmeDaProdutora = filmesRepository.findAll().stream().filter(filme -> filme.getProdutora() .contains(produtora) && filme.getVencedora().equals("yes")).collect(Collectors.toList());
             if(filmeDaProdutora.size() > 1) {
                 for (Filmes filme : filmeDaProdutora){
@@ -51,14 +55,20 @@ public class ConsultaPremios {
                 }
 
                 if(anos.size() > 0) { //Se chegou até aqui vai montar o retorno da consulta em formato JSON
-                    intervalo = Collections.max(anos) - Collections.min(anos) ;
+                    Collections.sort(anos);// lista ordenada
+                    //encontrar próximo ano
+                    for(int x = 0; x < anos.size()-1; x++) {
+                        anoAnterior =  anos.get(x);//min
+                        proximoAno  = anos.get(x+1);
+                        intervalo   = proximoAno - anoAnterior;
 
-                    IntervaloPremiosProdutoraDTO intervaloPremiosIntervalo = new IntervaloPremiosProdutoraDTO();
-                    intervaloPremiosIntervalo.setProdutora(produtora);
-                    intervaloPremiosIntervalo.setIntervalo(intervalo);
-                    intervaloPremiosIntervalo.setVitoriaAnterior(Collections.min(anos));
-                    intervaloPremiosIntervalo.setVitoriaSequinte(Collections.max(anos));
-                    listProdutoraPremiosIntervalo.add(intervaloPremiosIntervalo);
+                        IntervaloPremiosProdutoraDTO intervaloPremiosIntervalo = new IntervaloPremiosProdutoraDTO();
+                        intervaloPremiosIntervalo.setProdutora(produtora);
+                        intervaloPremiosIntervalo.setIntervalo(intervalo);
+                        intervaloPremiosIntervalo.setVitoriaAnterior(anoAnterior);
+                        intervaloPremiosIntervalo.setVitoriaSequinte(proximoAno);
+                        listProdutoraPremiosIntervalo.add(intervaloPremiosIntervalo);
+                    }
 
                     if(maxIntervalo.isEmpty()) {
                         maxIntervalo.put(produtora, intervalo) ;
